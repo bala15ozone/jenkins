@@ -1,0 +1,10 @@
+---
+
+- name: Tomcat Start and Stop
+  gather_facts: false
+  hosts: localhost
+  tasks:
+
+    - name: Start Tomcat Process
+      shell: sudo -u jenkins /data/apache-tomcat-7.0.55-alfresco/bin/catalina.sh start
+

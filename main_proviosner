@@ -1,0 +1,59 @@
+data "aws_vpc" "default" {
+  default = true
+}
+
+resource "aws_security_group" "web-node" {
+  name        = "web-node"
+  description = "Web Security Group"
+
+  ingress {
+    from_port   = 11556
+    to_port     = 11556
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+resource "aws_instance" "alfresco-test" {
+  ami = "ami-08c0248d1430ff59b"
+
+  connection {
+    user        = "ubuntu"
+    private_key = "${file("/home/bjayaraman/alfresco-automation/id_rsa.pem")}"
+  }
+
+  instance_type   = "t2.micro"
+  key_name        = "wel-admin"
+  security_groups = ["${aws_security_group.web-node.name}"]
+
+  provisioner "remote-exec" {
+    inline = [
+   "sudo -u jenkins sed -i \"/db.url=/ s/=.*/=alfresco-rds.chof5nbig7hv.us-east-1.rds.amazonaws.com/\" /data/apache-tomcat-7.0.55-alfresco/shared/classes/alfresco-global.properties",
+   "sleep 1",
+    ]
+  }
+ provisioner "remote-exec" {
+    inline = [
+   "nohup sudo -u jenkins /data/apache-tomcat-7.0.55-alfresco/bin/catalina.sh start &",
+   "sleep 1",
+    ]
+  }
+
+  tags = {
+    Name = "Alfresco-Testing"
+  }
+}
